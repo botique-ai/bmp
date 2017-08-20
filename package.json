@@ -1,0 +1,14 @@
+{
+  "name": "bmp",
+  "version": "1.0.0",
+  "description": "Botique Messaging Protocol",
+  "main": "",
+  "author": "Botique.ai",
+  "license": "MIT",
+  "scripts": {
+    "prepublishOnly": "./node_modules/typescript/bin/tsc -p ./ --outDir build/"
+  },
+  "devDependencies": {
+    "typescript": "^2.4.2"
+  }
+}
