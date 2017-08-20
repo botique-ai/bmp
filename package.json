@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Botique Messaging Protocol",
   "main": "",
+  "types": "./dist/index.d.ts",
   "author": "Botique.ai",
   "license": "MIT",
   "scripts": {
