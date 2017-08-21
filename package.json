@@ -2,21 +2,20 @@
   "name": "@botique/bmp",
   "version": "0.0.1",
   "description": "Botique Messaging Protocol",
-  "main": "",
-  "types": "./dist/index.d.ts",
+  "main": "./dist/index.js",
   "author": "botique.ai",
   "license": "MIT",
   "repository": "https://github.com/botique-ai/bmp.git",
   "scripts": {
-    "prepublishOnly": "./node_modules/typescript/bin/tsc -p ./ --outDir build/"
+    "prepublishOnly": "rm -rf ./build && ./node_modules/typescript/bin/tsc -p ./ --outDir build/"
   },
   "dependencies": {
+    "@types/node": "^8.0.24",
     "botframework-directlinejs": "^0.9.11",
     "mongodb": "^2.2.31",
     "uuid": "^3.1.0"
   },
   "devDependencies": {
-    "@types/node": "^8.0.24",
     "typescript": "^2.4.2"
   }
 }
