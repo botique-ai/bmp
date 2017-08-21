@@ -1,6 +1,6 @@
 {
   "name": "@botique/bmp",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "Botique Messaging Protocol",
   "main": "./dist/index.js",
   "author": "botique.ai",
