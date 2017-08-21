@@ -10,10 +10,13 @@
   "scripts": {
     "prepublishOnly": "./node_modules/typescript/bin/tsc -p ./ --outDir build/"
   },
-  "engines": {
-    "typescript": "^2.4.2"
+  "dependencies": {
+    "botframework-directlinejs": "^0.9.11",
+    "mongodb": "^2.2.31",
+    "uuid": "^3.1.0"
   },
   "devDependencies": {
+    "@types/node": "^8.0.24",
     "typescript": "^2.4.2"
   }
 }
