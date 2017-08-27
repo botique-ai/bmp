@@ -65,7 +65,7 @@ export function mapAnyDirectLineMessageToUserMessage(
   directlineActivity: Message,
   chatUser: ChatUser,
   botId: string | ObjectID,
-  botName: string,
+  platformData: {},
 ): UserMessage {
   // Directline doesnt specify clearly when a button was clicked.. we should check for ourselves
   try {
@@ -76,14 +76,14 @@ export function mapAnyDirectLineMessageToUserMessage(
         directlineActivity,
         chatUser,
         botId,
-        botName,
+        platformData,
       );
     } else {
       return mapTextDirectLineMessageToUserMessage(
         directlineActivity,
         chatUser,
         botId,
-        botName,
+        platformData,
       );
     }
   } catch (err) {
@@ -94,7 +94,7 @@ export function mapAnyDirectLineMessageToUserMessage(
       directlineActivity,
       chatUser,
       botId,
-      botName,
+      platformData,
     );
   }
 }
@@ -103,16 +103,13 @@ export function mapTextDirectLineMessageToUserMessage(
   directlineActivity: Message,
   chatUser: ChatUser,
   botId: string,
-  botName: string,
+  platformData: {},
 ): UserMessage {
   return {
     originId: get(directlineActivity, "channelData.clientActivityId", uuid()),
     bot: {
       _id: botId,
-      name: botName,
-      platformData: {
-        [BotPlatformType.DirectLine]: {}
-      }
+      platformData,
     },
     isEcho: false,
     dateReceived: new Date(directlineActivity.timestamp),
@@ -128,11 +125,20 @@ export function mapPayloadDirectLineMessageToUserMessage(
   directlineActivity: Message,
   user: ChatUser,
   botId: string | ObjectID,
-  botName: string,
+  platformData: {},
 ): UserMessage {
   return { 
-    originId: get(directlineActivity, "channelData.clientActivityId", uuid()), bot: { 
-      _id: botId, name: botName, platformData: { [BotPlatformType.DirectLine]: {} } }, isEcho: false, dateReceived: new Date(directlineActivity.timestamp), userId: user._id, contentType: ContentType.Payload, content: { payload: JSON.parse(directlineActivity.text).payload } };
+    originId: get(directlineActivity, "channelData.clientActivityId", uuid()),
+    bot: { 
+      _id: botId,
+      platformData,
+    },
+    isEcho: false,
+    dateReceived: new Date(directlineActivity.timestamp),
+    userId: user._id,
+    contentType: ContentType.Payload,
+    content: { payload: JSON.parse(directlineActivity.text).payload } 
+  };
 }
 
 export function mapUserMessageToDirectLineMessage(
