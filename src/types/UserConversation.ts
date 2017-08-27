@@ -3,7 +3,7 @@ import { UserMessage } from "./UserMessage";
 import { BotMessage } from "./BotMessage";
 
 export interface UserConversation {
-  _id: ObjectID;
+  _id?: ObjectID;
   botId: ObjectID;
   userId: string;
   timestamp: Date;
