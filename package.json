@@ -3,6 +3,7 @@
   "version": "0.0.3",
   "description": "Botique Messaging Protocol",
   "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "author": "botique.ai",
   "license": "MIT",
   "repository": "https://github.com/botique-ai/bmp.git",
