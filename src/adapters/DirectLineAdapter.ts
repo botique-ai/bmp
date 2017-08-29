@@ -123,7 +123,7 @@ export function mapTextDirectLineMessageToUserMessage(
 
 export function mapPayloadDirectLineMessageToUserMessage(
   directlineActivity: Message,
-  user: ChatUser,
+  chatUser: ChatUser,
   botId: string | ObjectID,
   platformData: {},
 ): UserMessage {
@@ -135,7 +135,7 @@ export function mapPayloadDirectLineMessageToUserMessage(
     },
     isEcho: false,
     dateReceived: new Date(directlineActivity.timestamp),
-    userId: user._id,
+    userId: chatUser.userId,
     contentType: ContentType.Payload,
     content: { payload: JSON.parse(directlineActivity.text).payload } 
   };
