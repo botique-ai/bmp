@@ -1,6 +1,6 @@
 {
   "name": "@botique/bmp",
-  "version": "0.0.3-7",
+  "version": "0.0.3-9",
   "description": "Botique Messaging Protocol",
   "main": "./build/index.js",
   "types": "./build/index.d.ts",
@@ -8,7 +8,8 @@
   "license": "MIT",
   "repository": "https://github.com/botique-ai/bmp.git",
   "scripts": {
-    "prepublishOnly": "rm -rf ./build && ./node_modules/typescript/bin/tsc -p ./ --outDir build/"
+    "prepublishOnly":
+      "rm -rf ./build && ./node_modules/typescript/bin/tsc -p ./ --outDir build/"
   },
   "dependencies": {
     "@types/node": "^8.0.24",

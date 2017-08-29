@@ -1,7 +1,6 @@
 export enum BotPlatformType {
   Facebook,
-  DirectLine,
-  Custom
+  BMP
 }
 
 export namespace BotPlatformType {
@@ -9,10 +8,8 @@ export namespace BotPlatformType {
     switch (e) {
       case BotPlatformType.Facebook:
         return "Facebook";
-      case BotPlatformType.DirectLine:
-        return "DirectLine";
-      case BotPlatformType.Custom:
-        return "Custom";
+      case BotPlatformType.BMP:
+        return "BMP";
     }
   }
 }
