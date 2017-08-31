@@ -1,6 +1,6 @@
-import { ObjectID } from 'mongodb';
+import { ObjectID } from "mongodb";
 import { isEmpty, get, reduce, castArray, map } from "lodash";
-import { v4 as uuid } from 'uuid';
+import { v4 as uuid } from "uuid";
 import * as urlUtil from "url";
 import {
   ButtonType,
@@ -23,9 +23,9 @@ import {
   ContentType,
   UserMessageAttachment
 } from "../types/UserMessage";
-import { ChatUser } from "../types/ChatUser";
 import { BotPlatformType } from "../types/BotPlatformType";
 import { parseJSONwithStringFallback } from "../utils";
+import { ChatUserProfile } from "../types/ChatUserProfile";
 
 export const BUTTON_TYPE_MAPPINGS: { [key in ButtonType]: CardActionTypes } = {
   web_url: "openUrl",
@@ -35,7 +35,8 @@ export const BUTTON_TYPE_MAPPINGS: { [key in ButtonType]: CardActionTypes } = {
 
 export function mapUserConversationToDirectLineMessage(
   conversation: UserConversation,
-  chatUser: ChatUser
+  userId: string,
+  userProfile: ChatUserProfile
 ) {
   let result: Message;
 
@@ -47,7 +48,8 @@ export function mapUserConversationToDirectLineMessage(
   } else {
     result = mapUserMessageToDirectLineMessage(
       conversation.message as UserMessage,
-      chatUser
+      userId,
+      userProfile
     );
   }
 
@@ -63,9 +65,9 @@ export function mapUserConversationToDirectLineMessage(
 
 export function mapAnyDirectLineMessageToUserMessage(
   directlineActivity: Message,
-  chatUser: ChatUser,
+  userId: string,
   botId: string | ObjectID,
-  platformData: {},
+  platformData: {}
 ): UserMessage {
   // Directline doesnt specify clearly when a button was clicked.. we should check for ourselves
   try {
@@ -74,16 +76,16 @@ export function mapAnyDirectLineMessageToUserMessage(
       // If we have a valid json with a payload attribute, we assume a pyload message was sent
       return mapPayloadDirectLineMessageToUserMessage(
         directlineActivity,
-        chatUser,
+        userId,
         botId,
-        platformData,
+        platformData
       );
     } else {
       return mapTextDirectLineMessageToUserMessage(
         directlineActivity,
-        chatUser,
+        userId,
         botId,
-        platformData,
+        platformData
       );
     }
   } catch (err) {
@@ -92,28 +94,28 @@ export function mapAnyDirectLineMessageToUserMessage(
     }
     return mapTextDirectLineMessageToUserMessage(
       directlineActivity,
-      chatUser,
+      userId,
       botId,
-      platformData,
+      platformData
     );
   }
 }
 
 export function mapTextDirectLineMessageToUserMessage(
   directlineActivity: Message,
-  chatUser: ChatUser,
+  userId: string,
   botId: string,
-  platformData: {},
+  platformData: {}
 ): UserMessage {
   return {
     originId: get(directlineActivity, "channelData.clientActivityId", uuid()),
     bot: {
       _id: botId,
-      platformData,
+      platformData
     },
     isEcho: false,
     dateReceived: new Date(directlineActivity.timestamp),
-    userId: chatUser.userId,
+    userId,
     contentType: ContentType.Text,
     content: {
       text: directlineActivity.text
@@ -123,27 +125,28 @@ export function mapTextDirectLineMessageToUserMessage(
 
 export function mapPayloadDirectLineMessageToUserMessage(
   directlineActivity: Message,
-  chatUser: ChatUser,
+  userId: string,
   botId: string | ObjectID,
-  platformData: {},
+  platformData: {}
 ): UserMessage {
-  return { 
+  return {
     originId: get(directlineActivity, "channelData.clientActivityId", uuid()),
-    bot: { 
+    bot: {
       _id: botId,
-      platformData,
+      platformData
     },
     isEcho: false,
     dateReceived: new Date(directlineActivity.timestamp),
-    userId: chatUser.userId,
+    userId,
     contentType: ContentType.Payload,
-    content: { payload: JSON.parse(directlineActivity.text).payload } 
+    content: { payload: JSON.parse(directlineActivity.text).payload }
   };
 }
 
 export function mapUserMessageToDirectLineMessage(
   userMessage: UserMessage,
-  chatUser: ChatUser,
+  userId: string,
+  userProfile: ChatUserProfile,
   overrides?: Partial<Message>
 ): Message {
   let resultMessage = {
@@ -155,8 +158,8 @@ export function mapUserMessageToDirectLineMessage(
     },
     timestamp: userMessage.dateReceived as any,
     from: {
-      id: chatUser.userId,
-      name: `${chatUser.profile.firstName} ${chatUser.profile.lastName}`
+      id: userId,
+      name: `${userProfile.firstName} ${userProfile.lastName}`
     }
   } as Message;
   switch (userMessage.contentType) {
@@ -273,16 +276,17 @@ export function mapMedia(
   };
 }
 
-export function mapQuickReplies(
-  quickReplies: Array<QuickReply>
-): HeroCard {
-  return { contentType: "application/vnd.microsoft.card.hero", content: { buttons: quickReplies.map<CardAction>(
-        (reply: QuickReply) => ({
-          type: "postBack",
-          value: JSON.stringify({ payload: reply.payload }),
-          title: reply.title
-        })
-      ) } };
+export function mapQuickReplies(quickReplies: Array<QuickReply>): HeroCard {
+  return {
+    contentType: "application/vnd.microsoft.card.hero",
+    content: {
+      buttons: quickReplies.map<CardAction>((reply: QuickReply) => ({
+        type: "postBack",
+        value: JSON.stringify({ payload: reply.payload }),
+        title: reply.title
+      }))
+    }
+  };
 }
 
 export function mapTemlpate(
