@@ -6,6 +6,6 @@ export interface ChatUserProfile {
   lastName?: string;
   profilePic?: string;
   gender?: Gender;
-  locale: string;
+  locale?: string;
   timezone: number;
 }
