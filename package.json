@@ -9,9 +9,11 @@
   "repository": "https://github.com/botique-ai/bmp.git",
   "scripts": {
     "start":
-      "TS_NODE_COMPILER_OPTIONS='{\"sourceMap\":true}' ./node_modules/.bin/nodemon --watch=./src --exec ./node_modules/.bin/ts-node -- ./src/index.ts",
-    "prepublishOnly":
-      "rm -rf ./build && ./node_modules/typescript/bin/tsc -p ./ --outDir build/"
+      "./node_modules/.bin/nodemon --watch ./src -e ts,js --exec 'yarn run build:dev'",
+    "build:dev":
+      "./node_modules/typescript/bin/tsc --sourceMap -p ./ --outDir build/",
+    "build": "./node_modules/typescript/bin/tsc -p ./ --outDir build/",
+    "prepublishOnly": "rm -rf ./build && yarn run build"
   },
   "dependencies": {
     "@types/node": "^8.0.24",

@@ -171,7 +171,7 @@ export function mapUserMessageToDirectLineMessage(
         (acc, v: UserMessageAttachment) => {
           const att = mapAttachment(v);
           if (!att) {
-            resultMessage.text = `User sent attachment of type ${v.type}`;
+            resultMessage.text = `Sent attachment`;
           } else {
             acc.push(att);
           }

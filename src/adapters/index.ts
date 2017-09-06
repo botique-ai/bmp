@@ -1,2 +1,2 @@
-import * as DirectLineAdapter from './DirectLineAdapter';
+import * as DirectLineAdapter from "./DirectLineAdapter";
 export { DirectLineAdapter };
