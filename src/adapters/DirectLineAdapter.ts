@@ -23,6 +23,7 @@ import { UserConversation } from "../types/UserConversation";
 import {
   UserMessage,
   ContentType,
+  UserMessageContent,
   UserMessageAttachment
 } from "../types/UserMessage";
 import { BotPlatformType } from "../types/BotPlatformType";
@@ -247,10 +248,12 @@ export function mapBotMessageToDirectLineMessage(
 
     // Check if we have any quick replies
     if (!isEmpty(botMessage.message.message.quick_replies)) {
-      resultMessage;
-      resultMessage.attachments.push(
-        mapQuickReplies(botMessage.message.message.quick_replies)
-      );
+      resultMessage = {
+        ...resultMessage,
+        suggestedActions: {
+          actions: mapQuickReplies(botMessage.message.message.quick_replies)
+        }
+      } as Message;
     }
   }
   if (resultMessage) {
@@ -283,17 +286,14 @@ export function mapMedia(
   };
 }
 
-export function mapQuickReplies(quickReplies: Array<QuickReply>): HeroCard {
-  return {
-    contentType: "application/vnd.microsoft.card.hero",
-    content: {
-      buttons: quickReplies.map<CardAction>((reply: QuickReply) => ({
-        type: "postBack",
-        value: JSON.stringify({ payload: reply.payload }),
-        title: `(quick) ${reply.title}`
-      }))
-    }
-  };
+export function mapQuickReplies(
+  quickReplies: Array<QuickReply>
+): Array<CardAction> {
+  return quickReplies.map<CardAction>((reply: QuickReply) => ({
+    type: "postBack",
+    value: JSON.stringify({ payload: reply.payload }),
+    title: reply.title
+  }));
 }
 
 export function mapTemlpate(
@@ -334,11 +334,11 @@ export function mapTemlpate(
 
 export function mapButton(button: Button): CardAction {
   const cardActionType = BUTTON_TYPE_MAPPINGS[button.type];
-  let value = button.title;
   if (!cardActionType) {
     return;
   }
 
+  let value = button.title;
   if (cardActionType === "openUrl") {
     const url = button.url["urlString"] || button.url;
     const params = button.url["parameters"];
@@ -346,7 +346,14 @@ export function mapButton(button: Button): CardAction {
       ? `${url}?${map(params, (v, k) => `${k}=${v}&`)}`.slice(0, -1)
       : url;
   } else if (cardActionType === "postBack") {
-    value = JSON.stringify({ payload: button.payload });
+    // we incorporate the button text into the payload so we can
+    // save it in history
+    const modifiedPayload = {
+      ...JSON.parse(button.payload),
+      title: button.title
+    };
+
+    value = JSON.stringify({ payload: modifiedPayload });
   }
 
   return {
