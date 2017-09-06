@@ -16,12 +16,14 @@ export interface UserMessage extends BotiqueMessage {
   metadata?: any;
   contentType: ContentType;
   isAdminMessage?: boolean;
-  content: {
-    text?: string;
-    link?: string;
-    payload?: string;
-    attachments?: Array<UserMessageAttachment>;
-  };
+  content: UserMessageContent;
+}
+
+export interface UserMessageContent {
+  text?: string;
+  link?: string;
+  payload?: string;
+  attachments?: Array<UserMessageAttachment>;
 }
 
 export interface UserMessageAttachment {
