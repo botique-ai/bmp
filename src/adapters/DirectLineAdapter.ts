@@ -73,7 +73,7 @@ export function mapAnyDirectLineMessageToUserMessage(
   try {
     const activityJSON = JSON.parse(directlineActivity.text);
     if (!isEmpty(activityJSON.payload)) {
-      // If we have a valid json with a payload attribute, we assume a pyload message was sent
+      // If we have a valid json with a payload attribute, we assume a payload message was sent
       return mapPayloadDirectLineMessageToUserMessage(
         directlineActivity,
         userId,
@@ -205,7 +205,7 @@ export function mapBotMessageToDirectLineMessage(
   overrides?: Partial<Message>
 ): IActivity {
   let resultMessage;
-  if (get(botMessage, "message.message.sender_action") === "typing_on") {
+  if (botMessage.message.sender_action === "typing_on") {
     resultMessage = {
       id: botMessage.originId,
       type: "typing",
@@ -224,9 +224,7 @@ export function mapBotMessageToDirectLineMessage(
         botMessage.message.message && !isEmpty(botMessage.message.message.text)
           ? botMessage.message.message.text
           : "",
-      channelData: {
-        clientActivityId: botMessage.originId
-      },
+      channelData: { clientActivityId: botMessage.originId },
       from: {
         id: botMessage.bot._id.toString(),
         name: `${botMessage.bot.name}`
@@ -249,6 +247,7 @@ export function mapBotMessageToDirectLineMessage(
 
     // Check if we have any quick replies
     if (!isEmpty(botMessage.message.message.quick_replies)) {
+      resultMessage;
       resultMessage.attachments.push(
         mapQuickReplies(botMessage.message.message.quick_replies)
       );
@@ -291,7 +290,7 @@ export function mapQuickReplies(quickReplies: Array<QuickReply>): HeroCard {
       buttons: quickReplies.map<CardAction>((reply: QuickReply) => ({
         type: "postBack",
         value: JSON.stringify({ payload: reply.payload }),
-        title: reply.title
+        title: `(quick) ${reply.title}`
       }))
     }
   };
