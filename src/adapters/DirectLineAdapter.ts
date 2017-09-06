@@ -15,7 +15,9 @@ import {
   Attachment,
   Media,
   HeroCard,
-  CardAction
+  CardAction,
+  IActivity,
+  Typing
 } from "botframework-directlinejs";
 import { UserConversation } from "../types/UserConversation";
 import {
@@ -38,9 +40,7 @@ export function mapUserConversationToDirectLineMessage(
   userId: string,
   userProfile: ChatUserProfile
 ) {
-  let result: Message;
-
-  // In the admin panel the messages are 'inverted' - the chat user is considered the bot for the ui
+  let result: IActivity;
   if (conversation.fromBot === true) {
     result = mapBotMessageToDirectLineMessage(
       conversation.message as BotMessage
@@ -171,7 +171,7 @@ export function mapUserMessageToDirectLineMessage(
         (acc, v: UserMessageAttachment) => {
           const att = mapAttachment(v);
           if (!att) {
-            resultMessage.text = `<User sent attachment of type ${v.type}>`;
+            resultMessage.text = `User sent attachment of type ${v.type}`;
           } else {
             acc.push(att);
           }
@@ -183,20 +183,16 @@ export function mapUserMessageToDirectLineMessage(
     case ContentType.Payload:
       const title = parseJSONwithStringFallback(userMessage.content.payload)
         .title;
-      resultMessage.text = title
-        ? `<User clicked on "${title}">`
-        : `<User clicked a button>`;
+      resultMessage.text = title;
       break;
     case ContentType.Link:
       const link = userMessage.content.link;
-      resultMessage.text = link
-        ? `<User clicked on "${link}">`
-        : `<User clicked a link>`;
+      resultMessage.text = link;
       break;
     default:
-      resultMessage.text = `<Cannot display content of type ${ContentType[
+      resultMessage.text = `Cannot display content of type ${ContentType[
         userMessage.contentType
-      ]}>`;
+      ]}`;
   }
   return {
     ...resultMessage,
@@ -207,9 +203,21 @@ export function mapUserMessageToDirectLineMessage(
 export function mapBotMessageToDirectLineMessage(
   botMessage: BotMessage,
   overrides?: Partial<Message>
-): Message {
-  if (botMessage.message.message) {
-    let resultMessage = {
+): IActivity {
+  let resultMessage;
+  if (get(botMessage, "message.message.sender_action") === "typing_on") {
+    resultMessage = {
+      id: botMessage.originId,
+      type: "typing",
+      channelData: { clientActivityId: botMessage.originId },
+      from: {
+        id: botMessage.bot._id.toString(),
+        name: `${botMessage.bot.name}`
+      },
+      attachments: []
+    } as Typing;
+  } else if (botMessage.message.message) {
+    resultMessage = {
       id: botMessage.originId,
       type: "message",
       text:
@@ -239,15 +247,15 @@ export function mapBotMessageToDirectLineMessage(
       }
     }
 
+    // Check if we have any quick replies
     if (!isEmpty(botMessage.message.message.quick_replies)) {
       resultMessage.attachments.push(
         mapQuickReplies(botMessage.message.message.quick_replies)
       );
     }
-    return {
-      ...resultMessage,
-      ...overrides
-    };
+  }
+  if (resultMessage) {
+    return { ...resultMessage, ...overrides };
   }
 }
 
