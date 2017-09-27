@@ -1,5 +1,5 @@
 import { ObjectID } from "mongodb";
-import { isEmpty, get, reduce, castArray, map } from "lodash";
+import { isEmpty, get, reduce, castArray, map, compact } from "lodash";
 import { v4 as uuid } from "uuid";
 import * as urlUtil from "url";
 import {
@@ -17,7 +17,8 @@ import {
   HeroCard,
   CardAction,
   IActivity,
-  Typing
+  Typing,
+  AdaptiveCard
 } from "botframework-directlinejs";
 import { UserConversation } from "../types/UserConversation";
 import {
@@ -34,6 +35,12 @@ export const BUTTON_TYPE_MAPPINGS: { [key in ButtonType]: CardActionTypes } = {
   web_url: "openUrl",
   phone_number: "call",
   postback: "postBack"
+};
+
+export const ADAPTIVE_CARD_ACTION_TYPE_MAPPINGS = {
+  web_url: "Action.OpenUrl",
+  phone_number: "call",
+  postback: "Action.Submit"
 };
 
 export function mapUserConversationToDirectLineMessage(
@@ -153,6 +160,7 @@ export function mapUserMessageToDirectLineMessage(
   let resultMessage = {
     id: userMessage.originId,
     type: "message",
+    textFormat: "plain",
     text: userMessage.content.text || "",
     channelData: {
       clientActivityId: userMessage.originId
@@ -220,6 +228,7 @@ export function mapBotMessageToDirectLineMessage(
   } else if (botMessage.message.message) {
     resultMessage = {
       id: botMessage.originId,
+      textFormat: "plain",
       type: "message",
       text:
         botMessage.message.message && !isEmpty(botMessage.message.message.text)
@@ -298,7 +307,7 @@ export function mapQuickReplies(
 
 export function mapTemlpate(
   attachment: BotMessaageAttachment
-): HeroCard | Array<HeroCard> {
+): HeroCard | Array<HeroCard> | AdaptiveCard | Array<AdaptiveCard> {
   if (attachment.payload) {
     if (attachment.payload.template_type === "generic") {
       const elements = attachment.payload.elements;
@@ -310,11 +319,7 @@ export function mapTemlpate(
             content: {
               title: el.title,
               subtitle: el.subtitle,
-              images: [
-                {
-                  url: el.image_url
-                }
-              ],
+              images: [{ url: el.image_url }],
               buttons: map(el.buttons, (button: any) => mapButton(button))
             }
           } as HeroCard)
@@ -322,10 +327,13 @@ export function mapTemlpate(
     } else if (attachment.payload.template_type === "button") {
       const buttons = attachment.payload.buttons;
       return {
-        contentType: "application/vnd.microsoft.card.hero",
+        contentType: "application/vnd.microsoft.card.adaptive",
         content: {
-          text: attachment.payload.text,
-          buttons: map(buttons, (button: any) => mapButton(button))
+          type: "AdaptiveCard",
+          body: [
+            { type: "TextBlock", text: attachment.payload.text, size: "medium" }
+          ],
+          actions: compact(map(buttons, mapButtonToAdaptiveCardButton))
         }
       };
     }
@@ -361,4 +369,40 @@ export function mapButton(button: Button): CardAction {
     title: button.title,
     value
   };
+}
+
+export function mapButtonToAdaptiveCardButton(button: Button) {
+  if (button.type === "element_share") {
+    return {
+      type: "Action.OpenUrl",
+      title: "Share",
+      value: "#"
+    };
+  }
+
+  const cardActionType = ADAPTIVE_CARD_ACTION_TYPE_MAPPINGS[button.type];
+  let value = button.title;
+  if (!cardActionType) {
+    return;
+  }
+
+  if (cardActionType === "Action.OpenUrl") {
+    const url = button.url["urlString"] || button.url;
+    const params = button.url["parameters"];
+    value = params
+      ? `${url}?${map(params, (v, k) => `${k}=${v}&`)}`.slice(0, -1)
+      : url;
+    return {
+      type: cardActionType,
+      title: button.title,
+      url: value
+    };
+  } else if (cardActionType === "Action.Submit") {
+    value = JSON.stringify({ payload: button.payload });
+    return {
+      type: cardActionType,
+      title: button.title,
+      data: value
+    };
+  }
 }
