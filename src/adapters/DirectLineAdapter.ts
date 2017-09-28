@@ -341,6 +341,10 @@ export function mapTemlpate(
 }
 
 export function mapButton(button: Button): CardAction {
+  if (button.type === "element_share") {
+    return { type: "openUrl", title: "Share", value: "#" };
+  }
+
   const cardActionType = BUTTON_TYPE_MAPPINGS[button.type];
   if (!cardActionType) {
     return;
