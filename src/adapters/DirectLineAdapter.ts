@@ -5,7 +5,7 @@ import * as urlUtil from "url";
 import {
   ButtonType,
   BotMessage,
-  BotMessaageAttachment,
+  BotMessageAttachment,
   QuickReply,
   Button
 } from "../types/BotMessage";
@@ -18,7 +18,9 @@ import {
   CardAction,
   IActivity,
   Typing,
-  AdaptiveCard
+  AdaptiveCard,
+  MediaType,
+  UnknownMedia
 } from "botframework-directlinejs";
 import { UserConversation } from "../types/UserConversation";
 import {
@@ -30,6 +32,7 @@ import {
 import { BotPlatformType } from "../types/BotPlatformType";
 import { parseJSONwithStringFallback } from "../utils";
 import { ChatUserProfile } from "../types/ChatUserProfile";
+import { UserMessageAttachmentType } from "../index";
 
 export const BUTTON_TYPE_MAPPINGS: { [key in ButtonType]: CardActionTypes } = {
   web_url: "openUrl",
@@ -79,10 +82,17 @@ export function mapAnyDirectLineMessageToUserMessage(
 ): UserMessage {
   // Directline doesnt specify clearly when a button was clicked.. we should check for ourselves
   try {
-    const activityJSON = JSON.parse(directlineActivity.text);
+    const activityJSON = JSON.parse(directlineActivity.text || "{}");
     if (!isEmpty(activityJSON.payload)) {
       // If we have a valid json with a payload attribute, we assume a payload message was sent
       return mapPayloadDirectLineMessageToUserMessage(
+        directlineActivity,
+        userId,
+        botId,
+        platformData
+      );
+    } else if (!isEmpty(directlineActivity.attachments)) {
+      return mapAttachmentDirectLineMessageToUserMessage(
         directlineActivity,
         userId,
         botId,
@@ -107,6 +117,39 @@ export function mapAnyDirectLineMessageToUserMessage(
       platformData
     );
   }
+}
+
+export function mapAttachmentDirectLineMessageToUserMessage(
+  directlineActivity: Message,
+  userId: string,
+  botId: string,
+  platformData: {}
+): UserMessage {
+  if (directlineActivity.attachments.length > 1) {
+    console.warn(
+      `Directline attachment to UserMessage only supports one attachment\n using only the first one`
+    );
+  }
+  return {
+    originId: get(directlineActivity, "channelData.clientActivityId", uuid()),
+    bot: { _id: botId, platformData },
+    isEcho: false,
+    dateReceived: new Date(directlineActivity.timestamp),
+    userId,
+    contentType: ContentType.Attachment,
+    content: {
+      attachments: [
+        {
+          type: mapDirectLineAttachmentTypeToBotique(
+            directlineActivity.attachments[0]["contentType"]
+          ),
+          payload: {
+            url: directlineActivity.attachments[0]["contentUrl"]
+          }
+        }
+      ]
+    }
+  };
 }
 
 export function mapTextDirectLineMessageToUserMessage(
@@ -271,7 +314,7 @@ export function mapBotMessageToDirectLineMessage(
 }
 
 export function mapAttachment(
-  attachment: UserMessageAttachment | BotMessaageAttachment
+  attachment: UserMessageAttachment | BotMessageAttachment
 ): Attachment | Attachment[] {
   switch (attachment.type) {
     case "image":
@@ -280,18 +323,37 @@ export function mapAttachment(
       return mapMedia(attachment);
     case "template":
       return mapTemlpate(attachment);
+    default:
+      return mapFile(attachment);
   }
 }
 
+export function mapFile(
+  attachment: UserMessageAttachment | BotMessageAttachment
+): UnknownMedia {
+  return {
+    contentType: "file",
+    contentUrl: attachment.payload.url,
+    name: urlUtil
+      .parse(attachment.payload.url)
+      .pathname.split("/")
+      .pop()
+  };
+}
+
 export function mapMedia(
-  attachment: UserMessageAttachment | BotMessaageAttachment
+  attachment: UserMessageAttachment | BotMessageAttachment
 ): Media {
   return {
     contentType: `${attachment.type}/${urlUtil
       .parse(attachment.payload.url)
       .pathname.split(".")
       .pop()}` as any,
-    contentUrl: attachment.payload.url
+    contentUrl: attachment.payload.url,
+    name: urlUtil
+      .parse(attachment.payload.url)
+      .pathname.split("/")
+      .pop()
   };
 }
 
@@ -306,7 +368,7 @@ export function mapQuickReplies(
 }
 
 export function mapTemlpate(
-  attachment: BotMessaageAttachment
+  attachment: BotMessageAttachment
 ): HeroCard | Array<HeroCard> | AdaptiveCard | Array<AdaptiveCard> {
   if (attachment.payload) {
     if (attachment.payload.template_type === "generic") {
@@ -408,5 +470,20 @@ export function mapButtonToAdaptiveCardButton(button: Button) {
       title: button.title,
       data: value
     };
+  }
+}
+
+function mapDirectLineAttachmentTypeToBotique(
+  dlContentType: MediaType | string
+): UserMessageAttachmentType {
+  switch (true) {
+    case /image/.test(dlContentType):
+      return "image";
+    case /audio/.test(dlContentType):
+      return "audio";
+    case /video/.test(dlContentType):
+      return "video";
+    default:
+      return "file";
   }
 }

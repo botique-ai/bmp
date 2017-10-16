@@ -26,8 +26,16 @@ export interface UserMessageContent {
   attachments?: Array<UserMessageAttachment>;
 }
 
+export type UserMessageAttachmentType =
+  | "audio"
+  | "fallback"
+  | "file"
+  | "image"
+  | "location"
+  | "video";
+
 export interface UserMessageAttachment {
-  type?: "audio" | "fallback" | "file" | "image" | "location" | "video";
+  type?: UserMessageAttachmentType;
   payload?: {
     url?: string;
     coordinates?: {

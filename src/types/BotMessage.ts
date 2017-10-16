@@ -1,4 +1,4 @@
-import { ObjectID } from 'mongodb';
+import { ObjectID } from "mongodb";
 import { pickBy } from "lodash";
 import { v4 } from "uuid";
 import { BotPlatformData } from "./BotPlatformData";
@@ -77,7 +77,7 @@ export function createGenericElement(
   }) as GenericElement;
 }
 
-export interface BotMessaageAttachment {
+export interface BotMessageAttachment {
   type: "image" | "audio" | "video" | "file" | "template";
   payload: Payload;
 }
@@ -107,7 +107,7 @@ export interface BotMessage extends BotiqueMessage {
     };
     message?: {
       text?: string;
-      attachment?: BotMessaageAttachment;
+      attachment?: BotMessageAttachment;
       quick_replies?: Array<QuickReply>;
       metadata?: string;
     };
