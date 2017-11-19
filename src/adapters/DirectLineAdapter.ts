@@ -334,10 +334,12 @@ export function mapFile(
   return {
     contentType: "file",
     contentUrl: attachment.payload.url,
-    name: urlUtil
-      .parse(attachment.payload.url)
-      .pathname.split("/")
-      .pop()
+    name: decodeURIComponent(
+      urlUtil
+        .parse(attachment.payload.url)
+        .pathname.split("/")
+        .pop()
+    )
   };
 }
 
@@ -350,10 +352,12 @@ export function mapMedia(
       .pathname.split(".")
       .pop()}` as any,
     contentUrl: attachment.payload.url,
-    name: urlUtil
-      .parse(attachment.payload.url)
-      .pathname.split("/")
-      .pop()
+    name: decodeURIComponent(
+      urlUtil
+        .parse(attachment.payload.url)
+        .pathname.split("/")
+        .pop()
+    )
   };
 }
 
