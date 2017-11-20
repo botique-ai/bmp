@@ -82,7 +82,7 @@ export function mapAnyDirectLineMessageToUserMessage(
 ): UserMessage {
   // Directline doesnt specify clearly when a button was clicked.. we should check for ourselves
   try {
-    const activityJSON = JSON.parse(directlineActivity.text || "{}");
+    const activityJSON = directlineActivity.value || JSON.parse(directlineActivity.text || "{}");
     if (!isEmpty(activityJSON.payload)) {
       // If we have a valid json with a payload attribute, we assume a payload message was sent
       return mapPayloadDirectLineMessageToUserMessage(
@@ -190,7 +190,11 @@ export function mapPayloadDirectLineMessageToUserMessage(
     dateReceived: new Date(directlineActivity.timestamp),
     userId,
     contentType: ContentType.Payload,
-    content: { payload: JSON.parse(directlineActivity.text).payload }
+    content: {
+      payload: directlineActivity.value ?
+        JSON.stringify({...JSON.parse((directlineActivity.value as any).payload), title: (directlineActivity.value as any).title}) :
+        JSON.parse(directlineActivity.text).payload
+    }
   };
 }
 
@@ -451,7 +455,7 @@ export function mapButtonToAdaptiveCardButton(button: Button) {
   }
 
   const cardActionType = ADAPTIVE_CARD_ACTION_TYPE_MAPPINGS[button.type];
-  let value = button.title;
+  let value: any = button.title;
   if (!cardActionType) {
     return;
   }
@@ -468,7 +472,7 @@ export function mapButtonToAdaptiveCardButton(button: Button) {
       url: value
     };
   } else if (cardActionType === "Action.Submit") {
-    value = JSON.stringify({ payload: button.payload });
+    value = { payload: button.payload, title: button.title };
     return {
       type: cardActionType,
       title: button.title,
