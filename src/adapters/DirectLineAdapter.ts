@@ -27,10 +27,8 @@ import { UserConversation } from "../types/UserConversation";
 import {
   UserMessage,
   ContentType,
-  UserMessageContent,
   UserMessageAttachment
 } from "../types/UserMessage";
-import { BotPlatformType } from "../types/BotPlatformType";
 import { parseJSONwithStringFallback } from "../utils";
 import { ChatUserProfile } from "../types/ChatUserProfile";
 import { UserMessageAttachmentType } from "../index";
