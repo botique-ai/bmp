@@ -14,7 +14,7 @@
     "prepublishOnly": "rm -rf ./build && npm run build"
   },
   "dependencies": {
-    "@botique/botframework-directlinejs": "^0.11.0",
+    "@botique/botframework-directlinejs": "^0.12.1",
     "@types/node": "^8.0.24",
     "lodash": "^4.17.4",
     "mongodb": "^2.2.31",
