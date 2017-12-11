@@ -40,8 +40,8 @@ export interface UserMessageAttachment {
     url?: string;
     coordinates?: {
       // Coordinates will be send for att type 'location'
-      lat: Number;
-      long: Number;
+      lat: number;
+      long: number;
     };
   };
 }

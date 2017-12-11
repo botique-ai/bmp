@@ -20,8 +20,9 @@ import {
   Typing,
   AdaptiveCard,
   MediaType,
-  UnknownMedia
-} from "botframework-directlinejs";
+  UnknownMedia,
+  Location,
+} from "@botique/botframework-directlinejs";
 import { UserConversation } from "../types/UserConversation";
 import {
   UserMessage,
@@ -74,31 +75,57 @@ export function mapUserConversationToDirectLineMessage(
   }
 }
 
-export function mapAnyDirectLineMessageToUserMessage(
+export function mapAnyDirectLinActivityToUserMessage(
+  directlineActivity: IActivity,
+  userId: string,
+  botId: string | ObjectID,
+  platformData: {}
+): UserMessage {
+  switch(directlineActivity.type){
+    case('message'):
+      return mapDirectLineMessageToUserMessage(directlineActivity as Message, userId, botId, platformData);
+    default:
+      throw new Error(`Could not map directline activity of type ${directlineActivity.type}`);
+  }
+}
+
+function mapDirectLineMessageToUserMessage(
   directlineActivity: Message,
   userId: string,
   botId: string | ObjectID,
   platformData: {}
 ): UserMessage {
-  // Directline doesnt specify clearly when a button was clicked.. we should check for ourselves
-  try {
-    const activityJSON = directlineActivity.value || JSON.parse(directlineActivity.text || "{}");
-    if (!isEmpty(activityJSON.payload)) {
-      // If we have a valid json with a payload attribute, we assume a payload message was sent
-      return mapPayloadDirectLineMessageToUserMessage(
-        directlineActivity,
-        userId,
-        botId,
-        platformData
-      );
-    } else if (!isEmpty(directlineActivity.attachments)) {
-      return mapAttachmentDirectLineMessageToUserMessage(
-        directlineActivity,
-        userId,
-        botId,
-        platformData
-      );
-    } else {
+    // Directline doesnt specify clearly when a button was clicked.. we should check for ourselves
+    try {
+      const activityJSON =
+        directlineActivity.value || JSON.parse(directlineActivity.text || "{}");
+      if (!isEmpty(activityJSON.payload)) {
+        // If we have a valid json with a payload attribute, we assume a payload message was sent
+        return mapPayloadDirectLineMessageToUserMessage(
+          directlineActivity,
+          userId,
+          botId,
+          platformData
+        );
+      } else if (!isEmpty(directlineActivity.attachments)) {
+        return mapAttachmentDirectLineMessageToUserMessage(
+          directlineActivity,
+          userId,
+          botId,
+          platformData
+        );
+      } else {
+        return mapTextDirectLineMessageToUserMessage(
+          directlineActivity,
+          userId,
+          botId,
+          platformData
+        );
+      }
+    } catch (err) {
+      if (!(err instanceof SyntaxError)) {
+        throw err;
+      }
       return mapTextDirectLineMessageToUserMessage(
         directlineActivity,
         userId,
@@ -106,17 +133,6 @@ export function mapAnyDirectLineMessageToUserMessage(
         platformData
       );
     }
-  } catch (err) {
-    if (!(err instanceof SyntaxError)) {
-      throw err;
-    }
-    return mapTextDirectLineMessageToUserMessage(
-      directlineActivity,
-      userId,
-      botId,
-      platformData
-    );
-  }
 }
 
 export function mapAttachmentDirectLineMessageToUserMessage(
@@ -139,14 +155,7 @@ export function mapAttachmentDirectLineMessageToUserMessage(
     contentType: ContentType.Attachment,
     content: {
       attachments: [
-        {
-          type: mapDirectLineAttachmentTypeToBotique(
-            directlineActivity.attachments[0]["contentType"]
-          ),
-          payload: {
-            url: directlineActivity.attachments[0]["contentUrl"]
-          }
-        }
+        mapDirectLineAttachmentToBotiqueAttachment(directlineActivity.attachments[0])
       ]
     }
   };
@@ -191,9 +200,12 @@ export function mapPayloadDirectLineMessageToUserMessage(
     userId,
     contentType: ContentType.Payload,
     content: {
-      payload: directlineActivity.value ?
-        JSON.stringify({...JSON.parse((directlineActivity.value as any).payload), title: (directlineActivity.value as any).title}) :
-        JSON.parse(directlineActivity.text).payload
+      payload: directlineActivity.value
+        ? JSON.stringify({
+            ...JSON.parse((directlineActivity.value as any).payload),
+            title: (directlineActivity.value as any).title
+          })
+        : JSON.parse(directlineActivity.text).payload
     }
   };
 }
@@ -246,9 +258,9 @@ export function mapUserMessageToDirectLineMessage(
       resultMessage.text = link;
       break;
     default:
-      resultMessage.text = `Cannot display content of type ${ContentType[
-        userMessage.contentType
-      ]}`;
+      resultMessage.text = `Cannot display content of type ${
+        ContentType[userMessage.contentType]
+      }`;
   }
   return {
     ...resultMessage,
@@ -327,9 +339,23 @@ export function mapAttachment(
       return mapMedia(attachment);
     case "template":
       return mapTemlpate(attachment);
+    case "location":
+      return mapLocation(attachment);
     default:
       return mapFile(attachment);
   }
+}
+
+export function mapLocation(
+  attachment: UserMessageAttachment
+): Location {
+  return ({
+    contentType: "location",
+    content: {
+        latitude: attachment.payload.coordinates.lat,
+        longitude: attachment.payload.coordinates.long,
+    }
+  })
 }
 
 export function mapFile(
@@ -368,11 +394,27 @@ export function mapMedia(
 export function mapQuickReplies(
   quickReplies: Array<QuickReply>
 ): Array<CardAction> {
-  return quickReplies.map<CardAction>((reply: QuickReply) => ({
+  return map<QuickReply, CardAction>(
+    quickReplies,
+    (quickReply: QuickReply) =>
+      quickReply.content_type === "location"
+        ? mapLocationQuickReply(quickReply)
+        : mapTextQuickReply(quickReply)
+  );
+}
+
+export function mapTextQuickReply(quickReply: QuickReply): CardAction {
+  return {
     type: "postBack",
-    value: JSON.stringify({ payload: reply.payload }),
-    title: reply.title
-  }));
+    value: JSON.stringify({ payload: quickReply.payload }),
+    title: quickReply.title
+  };
+}
+
+export function mapLocationQuickReply(quickReply: QuickReply): CardAction {
+  return {
+    type: "location"
+  };
 }
 
 export function mapTemlpate(
@@ -481,7 +523,35 @@ export function mapButtonToAdaptiveCardButton(button: Button) {
   }
 }
 
-function mapDirectLineAttachmentTypeToBotique(
+function mapDirectLineAttachmentToBotiqueAttachment(
+  directLineAttachment: Attachment
+): UserMessageAttachment {
+  switch(directLineAttachment.contentType){
+    case("location"):
+      return({
+        type: "location",
+        payload: mapDirectLineAttachmentLocationPayloadToBotiqueAttachmentPayload(directLineAttachment as Location)
+      })
+    default:
+      return({
+        type: mapDirectLineAttachmentTypeToBotiqueAttachmentType(directLineAttachment.contentType),
+        payload: {
+          url: directLineAttachment['contentUrl'],
+        }
+      })
+  }
+}
+
+function mapDirectLineAttachmentLocationPayloadToBotiqueAttachmentPayload(directLineLocationAttachment: Location){
+  return({
+    coordinates: {
+      long: directLineLocationAttachment.content.longitude,
+      lat: directLineLocationAttachment.content.latitude,
+    }
+  })
+}
+
+function mapDirectLineAttachmentTypeToBotiqueAttachmentType(
   dlContentType: MediaType | string
 ): UserMessageAttachmentType {
   switch (true) {

@@ -2,6 +2,12 @@
 # yarn lockfile v1
 
 
+"@botique/botframework-directlinejs@^0.11.0":
+  version "0.11.0"
+  resolved "https://registry.yarnpkg.com/@botique/botframework-directlinejs/-/botframework-directlinejs-0.11.0.tgz#3fb0be19ab4fcba82ba0e3e39860198415266ca5"
+  dependencies:
+    rxjs "^5.0.3"
+
 "@types/node@^8.0.24":
   version "8.0.24"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-8.0.24.tgz#06c580084d9add1fb40c1510ef0b448961246fb1"
@@ -130,12 +136,6 @@ boom@2.x.x:
   resolved "https://registry.yarnpkg.com/boom/-/boom-2.10.1.tgz#39c8918ceff5799f83f9492a848f625add0c766f"
   dependencies:
     hoek "2.x.x"
-
-botframework-directlinejs@^0.9.11:
-  version "0.9.11"
-  resolved "https://registry.yarnpkg.com/botframework-directlinejs/-/botframework-directlinejs-0.9.11.tgz#5bfa5a8f4feed9e416974dc4123e226cc82b8d8b"
-  dependencies:
-    rxjs "^5.0.3"
 
 boxen@^1.0.0:
   version "1.2.1"

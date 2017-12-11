@@ -10,6 +10,7 @@ export interface QuickReply {
   content_type: string;
   title: string;
   payload: string;
+  image_url?: string;
 }
 
 export declare type ButtonType =
@@ -91,12 +92,6 @@ export interface Payload {
   url?: string;
   top_element_style?: string;
   image_aspect_ratio?: "square" | "horizontal";
-}
-
-export interface QuickReply {
-  title: string;
-  image_url?: string;
-  payload: string;
 }
 
 export interface BotMessage extends BotiqueMessage {
