@@ -1,4 +1,3 @@
-import { BotPlatformData } from "./BotPlatformData";
 import { BotiqueMessage } from "./BotiqueMessage";
 
 export enum ContentType {
@@ -8,6 +7,10 @@ export enum ContentType {
   Attachment,
   Link
 }
+
+export const NON_CONVERSATION_MESSAGE_CONTENT_TYPES = [
+  ContentType.Notification
+];
 
 export interface UserMessage extends BotiqueMessage {
   dateReceived: Date;
