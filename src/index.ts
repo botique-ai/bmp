@@ -11,6 +11,7 @@ export * from "./types/TargetParameter";
 export * from "./types/UserConversation";
 export * from "./types/UserMessage";
 export * from "./types/BmpBot";
+export * from "./types/BotBMPSettings";
 
 // Adapters
 import * as DirectLineAdapter from "./adapters/DirectLineAdapter";
