@@ -484,6 +484,7 @@ export function mapTemlpate(
               title: el.title,
               subtitle: el.subtitle,
               images: [{ url: el.image_url }],
+              imageRatio: attachment.payload.image_aspect_ratio,
               buttons: map(el.buttons, (button: any) => mapButton(button))
             }
           } as HeroCard)
