@@ -32,7 +32,7 @@ import {
 } from "../types/UserMessage";
 import { parseJSONwithStringFallback } from "../utils";
 import { ChatUserProfile } from "../types/ChatUserProfile";
-import { UserMessageAttachmentType } from "../index";
+import {BMPMenu, UserMessageAttachmentType} from "../index";
 import { DIRECT_LINE_SUPPORTED_EVENT_NAMES } from "../types/DirectLineExtensions";
 
 export const BUTTON_TYPE_MAPPINGS: { [key in ButtonType]: CardActionTypes } = {
@@ -623,4 +623,21 @@ function mapDirectLineAttachmentTypeToBotiqueAttachmentType(
     default:
       return "file";
   }
+}
+
+export function mapMenu(menu: BMPMenu) {
+  return map(menu, menuItem => {
+    if (menuItem.subMenu) {
+      return {
+        title: menuItem.title,
+        subMenu: mapMenu(menuItem.subMenu)
+      };
+    }
+    else {
+      return mapButton({
+        ...menuItem,
+        payload: JSON.stringify(menuItem.payload)
+      } as Button);
+    }
+  })
 }
